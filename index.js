@@ -44,7 +44,7 @@ const renderUser = (docs) => {
   });
 };
 
-db.orderBy("city").onSnapshot((snapshot) => {
+db.orderBy("name").onSnapshot((snapshot) => {
   let changes = snapshot.docChanges();
   // console.log(changes);
   changes.forEach((change) => {
