@@ -1,4 +1,7 @@
+const db = firestore.collection("users");
+
 const userList = document.getElementById("user-list");
+
 const addUserForm = document.getElementById("add-user-form");
 const submit = document.getElementById("submit");
 
@@ -24,12 +27,6 @@ const renderUser = (docs) => {
     "class",
     "list-group-item d-flex justify-content-between align-items-start"
   );
-  //   li.className = [
-  //     "list-group-item",
-  //     "d-flex",
-  //     "justify-content-between",
-  //     "align-items-start",
-  //   ].join(" ");
 
   listDiv.appendChild(name);
   listDiv.appendChild(city);
@@ -42,32 +39,44 @@ const renderUser = (docs) => {
   badge.addEventListener("click", (e) => {
     e.stopPropagation();
     let id = e.target.parentElement.getAttribute("data-id");
-    console.log("Data Id ", id);
-    db.collection("users").doc(id).delete();
+    // console.log("Data Id ", id);
+    db.doc(id).delete();
   });
 };
 
-db.collection("users")
-  .get()
-  .then((snapshot) => {
-    console.log(snapshot.docs);
-    snapshot.docs.forEach((docs) => {
-      console.log(docs.data());
-      renderUser(docs);
-    });
-  })
-  .catch((error) => {
-    console.log(error);
+db.orderBy("city").onSnapshot((snapshot) => {
+  let changes = snapshot.docChanges();
+  // console.log(changes);
+  changes.forEach((change) => {
+    if (change.type === "added") {
+      renderUser(change.doc);
+    } else if (change.type === "removed") {
+      const li = userList.querySelector("[data-id=" + change.doc.id + "]");
+      userList.removeChild(li);
+    }
   });
+});
 
 //   Pushing Data
 addUserForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  console.log("clicked");
-  db.collection("users").add({
-    name: addUserForm.name.value,
-    city: addUserForm.city.value,
-  });
-  addUserForm.name.value = "";
-  addUserForm.city.value = "";
+  if (addUserForm.name.value && addUserForm.city.value) {
+    db.add({
+      name: addUserForm.name.value,
+      city: addUserForm.city.value,
+    });
+    addUserForm.name.value = "";
+    addUserForm.city.value = "";
+    var alert = document.querySelectorAll(".alert");
+    alert.forEach((item) => {
+      if (item) item.remove();
+    });
+  } else {
+    addUserForm.insertAdjacentHTML(
+      "beforebegin",
+      `<div class="alert alert-danger" role="alert">
+  Please insert some value inside input field sir!
+</div>`
+    );
+  }
 });
